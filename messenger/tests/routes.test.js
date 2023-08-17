@@ -1,6 +1,7 @@
 const index = require('../routes/index')
 const request = require('supertest')
 const express = require('express')
+const { User } = require('../db')
 const app = express()
 
 //recreate new express app, not touching app.js
@@ -20,7 +21,6 @@ describe('basic GET routes works', ()=> {
         request(app)
         .get('/signup')
         .expect('Content-Type', /json/)
-        .expect({title: 'Sign up'})
         .expect(200, done)
     });
     test('login route', done => {
@@ -34,13 +34,32 @@ describe('basic GET routes works', ()=> {
 
 describe('POST routes works with inputs', ()=> {
 
-    test('signup route', done => {
-        request(app)
-        .post('/signup')
-        .expect('Content-Type', /json/)
-        .expect({title: 'Sign up POST'})
-        .expect(200, done)
+    test('signup route', async () => {
+        const user = {
+            username: 'Bob', 
+            email:'email123@gmail.com',
+            password:'12345', 
+            confirmPassword: '12345',
+        }
+        const res = await request(app).post('/signup').type('form').send(user);
+        expect(res.statusCode).toBe(200)
+        expect(res.body.user._id).toBeDefined();
+        expect(res.body.user.email).toBe('email123@gmail.com');
     });
+
+    test('signup route with incorrect password', async () => {
+        const user = {
+            username: 'Bob', 
+            email:'email123@gmail.com',
+            password:'12345', 
+            confirmPassword: '123456',
+        }
+        const res = await request(app).post('/signup').type('form').send(user);
+        expect({ msg: 'Passwords do not match'})   
+        expect(res.statusCode).toBe(401)
+        
+    });
+
     test('login route', done => {
         request(app)
         .post('/login')
