@@ -1,6 +1,8 @@
 var express = require("express");
 var router = express.Router();
 const { User, Message } = require("../db");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 const { check, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 
@@ -17,8 +19,8 @@ router.get("/signup", function (req, res, next) {
 });
 
 router.get("/login", function (req, res, next) {
-  res.json({ title: "Log In" });
-  res.render("signup", { title: "Log in" });
+  //res.json({ title: "Log In" });
+  res.render("login", { title: "Log in" });
 });
 
 router.post(
@@ -73,19 +75,33 @@ router.post(
           password: hashedPw,
         });
         //await user.save();  not saved for testing
+        //token created but not a cookie yet, test later
+        /* const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY); */
         res.json({ title: "Sign up POST", user: user });
       });
     } catch (err) {
       return next(err);
     }
-    //check email
-    //hash password
-    //create jwt token
   }
 );
 
-router.post("/login", function (req, res, next) {
-  res.json({ title: "Log in POST" });
+router.post("/login", async function (req, res, next) {
+  const user = await User.findOne({ username: req.body.username });
+  if (!user) return res.status(401).json({ msg: "Could not find username" });
+  if (user.email != req.body.email)
+    return res.status(401).json({ msg: "Invalid email" });
+  try {
+    bcrypt.compare(req.body.password, user.password, async (err, isMatch) => {
+      if (err) return next(err).status(401);
+      if (isMatch) {
+        return res.status(200).json({ msg: `Welcome ${user.username}` });
+      } else return res.status(401).json({ msg: "Wrong password" });
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Internal Server Error: Post Login Route Handler" });
+  }
 });
 
 module.exports = router;

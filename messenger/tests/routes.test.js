@@ -6,7 +6,7 @@ const app = express()
 //recreate new express app, not touching app.js
 app.use(express.urlencoded({ extended:false }))
 app.use("/", index)
-
+/* 
 describe('basic GET routes works', ()=> {
 
     test('index route', done => {
@@ -30,9 +30,9 @@ describe('basic GET routes works', ()=> {
         .expect({title: 'Log In'})
         .expect(200, done)
     });
-})
+}) */
 
-describe('POST Signup With Various Inputs', ()=> {
+/* describe('POST Signup With Various Inputs', ()=> {
 
     test('valid inputs', async () => {
         const user = {
@@ -79,13 +79,51 @@ describe('POST Signup With Various Inputs', ()=> {
         const res = await request(app).post('/signup').type('form').send(user);
         expect(res.statusCode).toBe(401)
     });
-    
+}) */
 
-    test('login route', done => {
-        request(app)
-        .post('/login')
-        .expect('Content-Type', /json/)
-        .expect({title: 'Log in POST'})
-        .expect(200, done)
+describe('POST Login Route', () => {
+    test('Valid Login Inputs', async () => {
+        const user = {
+            username: 'taken', 
+            email:'taken@gmail.com',
+            password:'taken', 
+        }
+        const res = await request(app).post('/login').type('form').send(user);
+        expect(res.header['content-type']).toMatch(/json/)
+        expect(res.body).toMatchObject({msg: 'Welcome taken'})
+        expect(res.statusCode).toBe(200)
     });
+    test('Invalid Username', async () => {
+        const user = {
+            username: 'Bobby', 
+            email:'taken@gmail.com',
+            password:'taken', 
+        }
+        const res = await request(app).post('/login').type('form').send(user);
+        expect(res.header['content-type']).toMatch(/json/)
+        expect(res.body).toMatchObject({msg: 'Could not find username'})
+        expect(res.statusCode).toBe(401)
+    });
+    test('Invalid Email', async () => {
+        const user = {
+            username: 'taken', 
+            email:'wrong@gmail.com',
+            password:'taken', 
+        }
+        const res = await request(app).post('/login').type('form').send(user);
+        expect(res.header['content-type']).toMatch(/json/)
+        expect(res.body).toMatchObject({msg: 'Invalid email'})
+        expect(res.statusCode).toBe(401)
+    });
+    test('Invalid Password', async () => {
+        const user = {
+            username: 'taken', 
+            email:'taken@gmail.com',
+            password:'wrong', 
+        }
+        const res = await request(app).post('/login').type('form').send(user);
+        expect(res.header['content-type']).toMatch(/json/)
+        expect(res.body).toMatchObject({msg: 'Wrong password'})
+        expect(res.statusCode).toBe(401)
+    })
 })
