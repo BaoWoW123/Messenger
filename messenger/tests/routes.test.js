@@ -127,3 +127,35 @@ describe('POST Login Route', () => {
         expect(res.statusCode).toBe(401)
     })
 })
+
+describe('Cookies created', () => {
+    test('Token cookie on POST signup', async () => {
+        const user = {
+            username: 'Bobby', 
+            email:'email@gmail.com',
+            password:'12345', 
+            confirmPassword: '12345',
+        }
+        const res = await request(app).post('/signup').type('form').send(user);
+        const cookieHeader = res.header['set-cookie'][0]; 
+
+        expect(cookieHeader).toBeDefined();
+        expect(cookieHeader).toContain('HttpOnly');
+        expect(cookieHeader).toContain('Secure');
+        expect(res.statusCode).toBe(200)
+    });
+    test('Token cookie on POST login', async () => {
+        const user = {
+            username: 'taken', 
+            email:'taken@gmail.com',
+            password:'taken', 
+        }
+        const res = await request(app).post('/login').type('form').send(user);
+        const cookieHeader = res.header['set-cookie'][0]; 
+
+        expect(cookieHeader).toBeDefined();
+        expect(cookieHeader).toContain('HttpOnly');
+        expect(cookieHeader).toContain('Secure');
+        expect(res.statusCode).toBe(200)
+    });
+})

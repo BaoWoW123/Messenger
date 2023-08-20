@@ -10,12 +10,12 @@ const bcrypt = require("bcryptjs");
 //GET ROUTES RETURN JSON FOR TESTS
 router.get("/", function (req, res, next) {
   res.json({ title: "Index" });
-  res.render("index", { title: "Index" });
+  //res.render("index", { title: "Index" });
 });
 
 router.get("/signup", function (req, res, next) {
   res.json({ title: "Sign Up" });
-  res.render("signup", { title: "Sign up" });
+  //res.render("signup", { title: "Sign up" });
 });
 
 router.get("/login", function (req, res, next) {
@@ -75,8 +75,8 @@ router.post(
           password: hashedPw,
         });
         //await user.save();  not saved for testing
-        //token created but not a cookie yet, test later
-        /* const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY); */
+        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY);
+        res.cookie("jwt", token, { httpOnly: true, secure: true });
         res.json({ title: "Sign up POST", user: user });
       });
     } catch (err) {
@@ -94,6 +94,8 @@ router.post("/login", async function (req, res, next) {
     bcrypt.compare(req.body.password, user.password, async (err, isMatch) => {
       if (err) return next(err).status(401);
       if (isMatch) {
+        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY);
+        res.cookie("jwt", token, { httpOnly: true, secure: true });
         return res.status(200).json({ msg: `Welcome ${user.username}` });
       } else return res.status(401).json({ msg: "Wrong password" });
     });
