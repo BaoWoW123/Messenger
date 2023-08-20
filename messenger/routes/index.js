@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { check, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
+const passport = require('../passport');
 
 /* GET home page. */
 //GET ROUTES RETURN JSON FOR TESTS
@@ -75,7 +76,7 @@ router.post(
           password: hashedPw,
         });
         //await user.save();  not saved for testing
-        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY);
+        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {expiresIn:'1d'});
         res.cookie("jwt", token, { httpOnly: true, secure: true });
         res.json({ title: "Sign up POST", user: user });
       });
@@ -94,7 +95,7 @@ router.post("/login", async function (req, res, next) {
     bcrypt.compare(req.body.password, user.password, async (err, isMatch) => {
       if (err) return next(err).status(401);
       if (isMatch) {
-        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY);
+        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {expiresIn:'1d'});
         res.cookie("jwt", token, { httpOnly: true, secure: true });
         return res.status(200).json({ msg: `Welcome ${user.username}` });
       } else return res.status(401).json({ msg: "Wrong password" });
@@ -106,4 +107,10 @@ router.post("/login", async function (req, res, next) {
   }
 });
 
+router.get('/home', 
+  passport.authenticate('jwt', {session:false}),
+  (req, res) => {
+    return res.json({msg:'home'})
+  }
+)
 module.exports = router;

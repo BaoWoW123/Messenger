@@ -1,8 +1,9 @@
 const index = require('../routes/index')
 const request = require('supertest')
 const express = require('express')
+const cookieParser = require('cookie-parser');
 const app = express()
-
+app.use(cookieParser())
 //recreate new express app, not touching app.js
 app.use(express.urlencoded({ extended:false }))
 app.use("/", index)
@@ -158,4 +159,36 @@ describe('Cookies created', () => {
         expect(cookieHeader).toContain('Secure');
         expect(res.statusCode).toBe(200)
     });
+})
+
+describe('Authorization For Protected Route', () => {
+    let authToken;
+    const user = {
+        username: 'taken', 
+        email:'taken@gmail.com',
+        password:'taken', 
+    }
+    test('Unauthorized Route', async () => {
+        const res = await request(app).get('/home');
+        expect(res.text).toBe('Unauthorized');
+        expect(res.statusCode).toBe(401);
+    });
+
+    test('JWT & Cookie Created POST Login', async () => {
+        const res = await request(app).post('/login').type('form').send(user);
+
+        expect(res.header['content-type']).toMatch(/json/)
+        expect(res.body).toMatchObject({msg: 'Welcome taken'})
+        expect(res.header['set-cookie']).toBeDefined();
+        authToken = res.header['set-cookie'][0];
+        expect(res.statusCode).toBe(200);
+    });
+
+    test('Access to Protected Route', async () => {
+        if (!authToken) throw new Error('JWT token not found');
+        const res = await request(app).get('/home').set('Cookie', authToken);
+        expect(res.status).toBe(200)
+        expect(res.body).toMatchObject({msg: 'home'})
+    })
+
 })
