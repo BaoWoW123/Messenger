@@ -10,18 +10,15 @@ const passport = require('../passport');
 /* GET home page. */
 //GET ROUTES RETURN JSON FOR TESTS
 router.get("/", function (req, res, next) {
-  res.json({ title: "Index" });
-  //res.render("index", { title: "Index" });
+  res.render("index", { title: "Messenger" });
 });
 
 router.get("/signup", function (req, res, next) {
-  res.json({ title: "Sign Up" });
-  //res.render("signup", { title: "Sign up" });
+  res.render("signup", { title: "Sign Up" });
 });
 
 router.get("/login", function (req, res, next) {
-  //res.json({ title: "Log In" });
-  res.render("login", { title: "Log in" });
+  res.render("login", { title: "Log In" });
 });
 
 router.post(
@@ -63,7 +60,7 @@ router.post(
   async function (req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(401).json({ errors: errors.array() });
+      return res.status(401).render('signup', { errors: errors.array() });
 
     try {
       const { username, email, password } = req.body;
@@ -78,7 +75,7 @@ router.post(
         //await user.save();  not saved for testing
         const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {expiresIn:'1d'});
         res.cookie("jwt", token, { httpOnly: true, secure: true });
-        res.json({ title: "Sign up POST", user: user });
+        res.redirect('/home')
       });
     } catch (err) {
       return next(err);
@@ -88,17 +85,17 @@ router.post(
 
 router.post("/login", async function (req, res, next) {
   const user = await User.findOne({ username: req.body.username });
-  if (!user) return res.status(401).json({ msg: "Could not find username" });
+  if (!user) return res.status(401).render('login', { errors: ["Could not find username"] });
   if (user.email != req.body.email)
-    return res.status(401).json({ msg: "Invalid email" });
+    return res.status(401).render('login', { errors: ["Invalid email"] });
   try {
     bcrypt.compare(req.body.password, user.password, async (err, isMatch) => {
       if (err) return next(err).status(401);
       if (isMatch) {
         const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {expiresIn:'1d'});
         res.cookie("jwt", token, { httpOnly: true, secure: true });
-        return res.status(200).json({ msg: `Welcome ${user.username}` });
-      } else return res.status(401).json({ msg: "Wrong password" });
+        return res.redirect('/home');
+      } else return res.status(401).render('login', { errors: ["Wrong password"] });
     });
   } catch (err) {
     res
@@ -108,9 +105,13 @@ router.post("/login", async function (req, res, next) {
 });
 
 router.get('/home', 
-  passport.authenticate('jwt', {session:false}),
+  passport.authenticate('jwt', {session:false, failureRedirect: '/login'}),
   (req, res) => {
-    return res.json({msg:'home'})
+    if (!req.user) {
+      return res.status(401).redirect('/login')
+    }
+    return res.status(200).render('home', {title:'Home', user:req.user})
   }
 )
+
 module.exports = router;
