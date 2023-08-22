@@ -3,3 +3,19 @@ extends layout
 block content
   h1 Home
   h1 Welcome #{user.username}
+  if conversations 
+    ul 
+      each convo in conversation 
+        li=convo
+  div     
+  h1 Chat view
+  div 
+    ul.friends Friends
+     if user.friends 
+       each friend in user.friends 
+        button=friend.username
+  form(method='post')
+    label(for="username")
+    input(type="text" name='username' placeholder='Add friend' required)
+    label(for="createChat")
+    button(type='submit') Add

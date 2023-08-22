@@ -12,14 +12,25 @@ const userSchema = new Schema({
     email: {type: String, required:true, unique:true},
     password: {type: String, required:true},
     createdAt: {type: Date, default: Date.now, required: true},
+    friends: {type: [Schema.ObjectId], ref: 'User'},
 }, {collection: 'Users'})
 
 const messageSchema = new Schema({
+    conversationId: {type: Schema.ObjectId, required:true},
     content: {type: String, required:true},
+    senderId: {type: Schema.ObjectId, required:true},
+    receiverId: {type: Schema.ObjectId, required:true},
     date: {type: Date, required:true}
 }, {collection: 'Messages'})
 
+const conversationSchema = new Schema ({
+    messsagers: {type: [String], required:true},
+    messsagerIds: {type: [Schema.ObjectId], required:true},
+    date: {type: Date, default: Date.now, required:true}
+})
+
 const User = mongoose.model('User', userSchema);
+const Conversation = mongoose.model('Conversation', conversationSchema);
 const Message = mongoose.model('Message', messageSchema);
 
-module.exports = {User, Message}
+module.exports = {User, Message, Conversation}

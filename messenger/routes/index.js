@@ -84,7 +84,10 @@ router.post(
 );
 
 router.post("/login", async function (req, res, next) {
-  const user = await User.findOne({ username: req.body.username });
+  const user = await User.findOne({ username: req.body.username }).populate({
+      path:'friends',
+      select: '-email -password',
+    });
   if (!user) return res.status(401).render('login', { errors: ["Could not find username"] });
   if (user.email != req.body.email)
     return res.status(401).render('login', { errors: ["Invalid email"] });
@@ -106,11 +109,42 @@ router.post("/login", async function (req, res, next) {
 
 router.get('/home', 
   passport.authenticate('jwt', {session:false, failureRedirect: '/login'}),
-  (req, res) => {
+  async (req, res) => {
     if (!req.user) {
       return res.status(401).redirect('/login')
     }
-    return res.status(200).render('home', {title:'Home', user:req.user})
+    const user = await User.findById(req.user._id).populate({
+      path:'friends',
+      select: '-email -password',
+    }).exec();
+    //find all conversations with user
+    return res.status(200).render('home', {title:'Home', user:user})
+  }
+)
+
+router.post('/home', 
+  passport.authenticate('jwt', {session:false, failureRedirect: '/login'}),
+  async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).redirect('/login')
+    }
+   try {
+    const { username } = req.body;
+    const friend = await User.findOne({username: username})
+    console.log(friend)
+    if (!friend) return res.redirect('/home');
+    const user = await User.findByIdAndUpdate(
+      req.user._id, 
+      {$addToSet: {friends: friend._id}},
+      {new: true}
+    ).populate({
+      path:'friends',
+      select: '-email -password',
+    }).select('-email -password').exec();
+    return res.status(200).render('home', {title:'Home', user:user});
+   } catch(err) {
+    return next(err)
+   }
   }
 )
 
