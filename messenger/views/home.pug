@@ -28,16 +28,21 @@ block content
         body: JSON.stringify({friendUsername}),
       })
       if (res.ok) {
-        //temporary
-        const data = await res.json()
-        if (data.conversation) {
-          const div = document.querySelector('.conversation');
-          div.innerHTML = JSON.stringify(data.conversation);
+        const data = await res.json();
+
+        if (data.conversation.length) { 
+        document.querySelector('.conversation').innerHTML = data.conversation.join('');
+        } else { 
+          document.querySelector('.conversation').innerHTML = '<h3>New Conversation</h3>';
         }
 
       }
       } catch(err) {
         console.error("ERROR", err)
       }
+    }
+
+    async function sendMessage(evt) {
+
     }
     

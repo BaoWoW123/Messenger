@@ -176,6 +176,7 @@ router.post(
       let conversation = await Conversation.findOne({
         messagerIds: { $all: [user._id, friend._id] },
       });
+      let formatMsgs;
       if (!conversation) {
         conversation = new Conversation({
           messagers: [user.username, friend.username],
@@ -184,10 +185,22 @@ router.post(
         });
         conversation.save();
       } else {
-        //with fetched conversation, fetch all messages with conversation ID sorted by time
-      }
+        const messages = await Message.find({conversationId: conversation._id}).sort({date:1});
 
-      return res.status(200).json({ conversation: conversation });
+        formatMsgs = messages.map((msg)=> {
+          const messageDate = new Date(msg.date);
+          // Format the date in MM/DD/YY and 12-hour clock format
+          const options = { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true };
+          const formattedDate = messageDate.toLocaleString('en-US', options);
+        
+          return `
+            <p class='message'>
+              <div>${msg.content}</div>
+              <p>${formattedDate}</p>
+            </p>`;
+        })
+      }
+      return res.status(200).json({ conversation: formatMsgs});
     } else {
       return res.status().json({Error: 'Friend username not found'})
     }
