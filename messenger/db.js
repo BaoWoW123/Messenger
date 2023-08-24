@@ -16,7 +16,7 @@ const userSchema = new Schema({
 }, {collection: 'Users'})
 
 const messageSchema = new Schema({
-    conversationId: {type: Schema.ObjectId, required:true},
+    conversationId: {type: Schema.ObjectId, required:true, ref: 'Conversation'},
     content: {type: String, required:true},
     senderId: {type: Schema.ObjectId, required:true},
     receiverId: {type: Schema.ObjectId, required:true},
@@ -24,8 +24,8 @@ const messageSchema = new Schema({
 }, {collection: 'Messages'})
 
 const conversationSchema = new Schema ({
-    messsagers: {type: [String], required:true},
-    messsagerIds: {type: [Schema.ObjectId], required:true},
+    messagers: {type: [String], required:true},
+    messagerIds: {type: [Schema.ObjectId], required:true},
     date: {type: Date, default: Date.now, required:true}
 })
 

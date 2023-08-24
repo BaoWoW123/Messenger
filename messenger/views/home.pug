@@ -3,19 +3,41 @@ extends layout
 block content
   h1 Home
   h1 Welcome #{user.username}
-  if conversations 
-    ul 
-      each convo in conversation 
-        li=convo
-  div     
+  .conversation 
   h1 Chat view
   div 
     ul.friends Friends
      if user.friends 
        each friend in user.friends 
-        button=friend.username
+        button(onclick="getConversation(event)")=friend.username
   form(method='post')
-    label(for="username")
-    input(type="text" name='username' placeholder='Add friend' required)
+    label(for="username") Add friend: 
+    input(type="text" name='username' placeholder='Add username...' required)
     label(for="createChat")
-    button(type='submit') Add
+    button(type='button') Add
+
+  script.
+    async function getConversation (evt) {
+      const friendUsername = evt.target.textContent;
+      try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({friendUsername}),
+      })
+      if (res.ok) {
+        //temporary
+        const data = await res.json()
+        if (data.conversation) {
+          const div = document.querySelector('.conversation');
+          div.innerHTML = JSON.stringify(data.conversation);
+        }
+
+      }
+      } catch(err) {
+        console.error("ERROR", err)
+      }
+    }
+    

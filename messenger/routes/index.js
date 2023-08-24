@@ -1,11 +1,11 @@
 var express = require("express");
 var router = express.Router();
-const { User, Message } = require("../db");
+const { User, Message, Conversation } = require("../db");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { check, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
-const passport = require('../passport');
+const passport = require("../passport");
 
 /* GET home page. */
 //GET ROUTES RETURN JSON FOR TESTS
@@ -60,7 +60,7 @@ router.post(
   async function (req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(401).render('signup', { errors: errors.array() });
+      return res.status(401).render("signup", { errors: errors.array() });
 
     try {
       const { username, email, password } = req.body;
@@ -73,9 +73,11 @@ router.post(
           password: hashedPw,
         });
         //await user.save();  not saved for testing
-        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {expiresIn:'1d'});
+        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {
+          expiresIn: "1d",
+        });
         res.cookie("jwt", token, { httpOnly: true, secure: true });
-        res.redirect('/home')
+        res.redirect("/home");
       });
     } catch (err) {
       return next(err);
@@ -85,20 +87,26 @@ router.post(
 
 router.post("/login", async function (req, res, next) {
   const user = await User.findOne({ username: req.body.username }).populate({
-      path:'friends',
-      select: '-email -password',
-    });
-  if (!user) return res.status(401).render('login', { errors: ["Could not find username"] });
+    path: "friends",
+    select: "-email -password",
+  });
+  if (!user)
+    return res
+      .status(401)
+      .render("login", { errors: ["Could not find username"] });
   if (user.email != req.body.email)
-    return res.status(401).render('login', { errors: ["Invalid email"] });
+    return res.status(401).render("login", { errors: ["Invalid email"] });
   try {
     bcrypt.compare(req.body.password, user.password, async (err, isMatch) => {
       if (err) return next(err).status(401);
       if (isMatch) {
-        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {expiresIn:'1d'});
+        const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {
+          expiresIn: "1d",
+        });
         res.cookie("jwt", token, { httpOnly: true, secure: true });
-        return res.redirect('/home');
-      } else return res.status(401).render('login', { errors: ["Wrong password"] });
+        return res.redirect("/home");
+      } else
+        return res.status(401).render("login", { errors: ["Wrong password"] });
     });
   } catch (err) {
     res
@@ -107,45 +115,83 @@ router.post("/login", async function (req, res, next) {
   }
 });
 
-router.get('/home', 
-  passport.authenticate('jwt', {session:false, failureRedirect: '/login'}),
+router.get(
+  "/home",
+  passport.authenticate("jwt", { session: false, failureRedirect: "/login" }),
   async (req, res) => {
     if (!req.user) {
-      return res.status(401).redirect('/login')
+      return res.status(401).redirect("/login");
     }
-    const user = await User.findById(req.user._id).populate({
-      path:'friends',
-      select: '-email -password',
-    }).exec();
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: "friends",
+        select: "-email -password",
+      })
+      .exec();
     //find all conversations with user
-    return res.status(200).render('home', {title:'Home', user:user})
+    return res.status(200).render("home", { title: "Home", user: user });
   }
-)
+);
 
-router.post('/home', 
-  passport.authenticate('jwt', {session:false, failureRedirect: '/login'}),
+router.post(
+  "/home",
+  passport.authenticate("jwt", { session: false, failureRedirect: "/login" }),
   async (req, res, next) => {
     if (!req.user) {
-      return res.status(401).redirect('/login')
+      return res.status(401).redirect("/login");
     }
-   try {
-    const { username } = req.body;
-    const friend = await User.findOne({username: username})
-    console.log(friend)
-    if (!friend) return res.redirect('/home');
-    const user = await User.findByIdAndUpdate(
-      req.user._id, 
-      {$addToSet: {friends: friend._id}},
-      {new: true}
-    ).populate({
-      path:'friends',
-      select: '-email -password',
-    }).select('-email -password').exec();
-    return res.status(200).render('home', {title:'Home', user:user});
-   } catch(err) {
-    return next(err)
-   }
+    try {
+      const { username } = req.body;
+      const friend = await User.findOne({ username: username });
+      console.log(friend);
+      if (!friend) return res.redirect("/home");
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { $addToSet: { friends: friend._id } },
+        { new: true }
+      )
+        .populate({
+          path: "friends",
+          select: "-email -password",
+        })
+        .select("-email -password")
+        .exec();
+      return res.status(200).render("home", { title: "Home", user: user });
+    } catch (err) {
+      return next(err);
+    }
   }
-)
+);
+
+router.post(
+  "/chat",
+  passport.authenticate("jwt", { session: false, failureRedirect: "/login" }),
+  async (req, res, next) => {
+    const { friendUsername } = req.body;
+    const user = req.user;
+    if (friendUsername) {
+      const friend = await User.findOne({ username: friendUsername });
+
+      //find conversation between both users, if none, then create one
+      let conversation = await Conversation.findOne({
+        messagerIds: { $all: [user._id, friend._id] },
+      });
+      if (!conversation) {
+        conversation = new Conversation({
+          messagers: [user.username, friend.username],
+          messagerIds: [user._id, friend._id],
+          date: new Date(),
+        });
+        conversation.save();
+      } else {
+        //with fetched conversation, fetch all messages with conversation ID sorted by time
+      }
+
+      return res.status(200).json({ conversation: conversation });
+    } else {
+      return res.status().json({Error: 'Friend username not found'})
+    }
+  }
+);
 
 module.exports = router;
