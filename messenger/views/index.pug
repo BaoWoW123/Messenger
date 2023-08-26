@@ -1,5 +1,12 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  div.index
+    h1= title
+    p Welcome to #{title} App
+    div(style='display:flex')
+      a(href="/login") 
+        button Log in
+      a(href="/signup") 
+        button Sign up
+

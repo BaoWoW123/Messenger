@@ -1,18 +1,16 @@
 extends layout
 
 block content
-  h1 Home
   h1 Welcome #{user.username}
   .conversation 
-  h1 Chat view
   div 
     ul.friends Friends
-     if user.friends 
-       each friend in user.friends 
+    if user.friends 
+      each friend in user.friends 
         button(onclick="getConversation(event)")=friend.username
-  form(method='post')
-    label(for="username") Add friend: 
-    input(type="text" name='username' placeholder='Add username...' required)
+  form.addForm(method='post')
+    label(for="username") Add friend
+    input(type="text" name='username' placeholder="Friend's username..." required)
     label(for="createChat")
     button(type='button') Add
 
