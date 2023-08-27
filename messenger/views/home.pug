@@ -2,17 +2,20 @@ extends layout
 
 block content
   h1 Welcome #{user.username}
-  .conversation 
-  div 
-    ul.friends Friends
-    if user.friends 
-      each friend in user.friends 
-        button(onclick="getConversation(event)")=friend.username
-  form.addForm(method='post')
-    label(for="username") Add friend
-    input(type="text" name='username' placeholder="Friend's username..." required)
-    label(for="createChat")
-    button(type='button') Add
+  .home
+    .conversation 
+    .friendsWrapper
+      ul 
+        h3 Friends
+        if user.friends 
+          .friends
+            each friend in user.friends 
+              button(onclick="getConversation(event)")=friend.username
+        form.addForm(method='post')
+          label(for="username")
+            input(type="text" name='username' placeholder="Friend's username..." required)
+          label(for="createChat")
+            button(type='button') Add
 
   script.
     async function getConversation (evt) {

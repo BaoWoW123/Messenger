@@ -194,10 +194,7 @@ router.post(
           const formattedDate = messageDate.toLocaleString('en-US', options);
         
           return `
-            <p class='message'>
-              <div>${msg.content}</div>
-              <p>${formattedDate}</p>
-            </p>`;
+            <div class='message'><div>${msg.content}</div><div>${formattedDate}</div></div>`;
         })
       }
       return res.status(200).json({ conversation: formatMsgs});

@@ -1,5 +1,5 @@
 body {
-  padding: 50px;
+  padding: 20px;
   margin: auto;
   box-sizing: border-box;
   font: 16px "Lucida Grande", Helvetica, Arial, sans-serif;
@@ -15,6 +15,7 @@ body {
 a {
   color: #00B7FF;
 }
+
 button {
   border: 1px solid whitesmoke;
   background-color: #00B7FF;
@@ -50,6 +51,15 @@ input {
   position: absolute;
   top:25%;
 }
+.home {
+  display: grid;
+  grid-template-rows: 2fr 1fr;
+  gap: 20px;
+  text-align: center;
+  min-width: 100%;
+  flex: 1;
+}
+
 
 .errors {
   display:flex; 
@@ -57,12 +67,6 @@ input {
   gap:5px;
   font-weight: bold;
 }
-/* .home {
-  flex:1 1;
-  padding: 20px;
-  border: 1px solid gray;
-  background-color:white;
-} */
 
 form {
   display: flex;
@@ -76,7 +80,40 @@ form button {
 }
 
 .addForm {
-  flex-direction: column;
+  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
+  padding-top:10px;
+  gap:0px;
+}
+
+.friendsWrapper {
+  display: flex;
+  flex-direction:column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.friends {
+  display: flex;
+  justify-content: center;
+  gap:3px;
+}
+
+.conversation {
+  background-color: white;
+  flex:1;
+  border:1px solid black;
+  border-radius:5px;
+  padding:20px;
+}
+
+.message {
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom:1px solid whitesmoke;
 }
