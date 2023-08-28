@@ -185,21 +185,64 @@ router.post(
         });
         conversation.save();
       } else {
-        const messages = await Message.find({conversationId: conversation._id}).sort({date:1});
+        const messages = await Message.find({
+          conversationId: conversation._id,
+        }).sort({ date: 1 });
 
-        formatMsgs = messages.map((msg)=> {
+        formatMsgs = messages.map((msg) => {
           const messageDate = new Date(msg.date);
           // Format the date in MM/DD/YY and 12-hour clock format
-          const options = { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: 'numeric', hour12: true };
-          const formattedDate = messageDate.toLocaleString('en-US', options);
-        
+          const options = {
+            month: "numeric",
+            day: "numeric",
+            year: "2-digit",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: true,
+          };
+          const formattedDate = messageDate.toLocaleString("en-US", options);
+
           return `
             <div class='message'><div>${msg.content}</div><div>${formattedDate}</div></div>`;
-        })
+        });
       }
-      return res.status(200).json({ conversation: formatMsgs});
+      return res.status(200).json({ conversation: formatMsgs });
     } else {
-      return res.status().json({Error: 'Friend username not found'})
+      return res.status().json({ Error: "Friend username not found" });
+    }
+  }
+);
+
+router.post(
+  "/message",
+  passport.authenticate("jwt", { session: false, failureRedirect: "/login" }),
+  check("msg", "Message check").trim().escape(),
+  async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return console.error(errors.array());
+    }
+    try {
+      const { msg, friend } = req.body;
+      const senderId = req.user._id;
+      const receiverId = (await User.findOne({ username: friend }).select("id"))._id;
+      const conversationId = (
+        await Conversation.findOne({
+          messagerIds: { $all: [senderId, receiverId] },
+        }).select("id")
+      )._id;
+
+      const message = new Message({
+        conversationId: conversationId,
+        content: msg,
+        senderId: senderId,
+        receiverId: receiverId,
+        date: new Date(),
+      });
+      const save = await message.save()
+      return res.json({ save });
+    } catch (err) {
+      return next(err);
     }
   }
 );

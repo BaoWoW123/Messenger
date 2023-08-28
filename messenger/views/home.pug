@@ -4,6 +4,10 @@ block content
   h1 Welcome #{user.username}
   .home
     .conversation 
+      .messages
+      form.messageForm(method="post")
+        label(for="messageInput")
+          input.messageInput(type="text" name='messageInput' placeholder="Send message..." required)
     .friendsWrapper
       ul 
         h3 Friends
@@ -18,8 +22,30 @@ block content
             button(type='button') Add
 
   script.
+
+    const messageForm = document.querySelector('.messageForm');
+    messageForm.addEventListener('submit', async (evt) => {
+      evt.preventDefault()
+      const msg = document.querySelector('.messageInput');
+      try {
+        sendMessage(msg.value);
+        msg.value = '';
+      } catch(err) {
+        console.error('Error sending message form', err)
+      }
+    })
+
     async function getConversation (evt) {
       const friendUsername = evt.target.textContent;
+      const activeBtns = document.querySelectorAll('.active');
+      //remove & set active friend for ajax fetching for /message
+      if (activeBtns) {
+        activeBtns.forEach((btn) => {
+          btn.classList.remove('active')
+        })
+      }
+      evt.target.classList.add('active');
+      
       try {
       const res = await fetch('/chat', {
         method: 'POST',
@@ -30,11 +56,10 @@ block content
       })
       if (res.ok) {
         const data = await res.json();
-
         if (data.conversation.length) { 
-        document.querySelector('.conversation').innerHTML = data.conversation.join('');
+        document.querySelector('.messages').innerHTML = data.conversation.join('');
         } else { 
-          document.querySelector('.conversation').innerHTML = '<h3>New Conversation</h3>';
+          document.querySelector('.messages').innerHTML = '<h3>New Conversation</h3>';
         }
 
       }
@@ -43,7 +68,24 @@ block content
       }
     }
 
-    async function sendMessage(evt) {
+    async function sendMessage(msg) {
+      const friend = document.querySelector('.active').textContent
+      try {
+        const res = await fetch('/message', {
+          method: 'POST',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({msg, friend})
+        })
 
+        if (res.ok) {
+          console.log('message sent successfully')
+        } else {
+          console.log('Error sending message:', res.status)
+        }
+      } catch (err) {
+        console.error('Caught Error', err)
+      }
     }
     
