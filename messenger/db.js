@@ -18,8 +18,8 @@ const userSchema = new Schema({
 const messageSchema = new Schema({
     conversationId: {type: Schema.ObjectId, required:true, ref: 'Conversation'},
     content: {type: String, required:true},
-    senderId: {type: Schema.ObjectId, required:true},
-    receiverId: {type: Schema.ObjectId, required:true},
+    senderId: {type: Schema.ObjectId, required:true, ref: 'User'},
+    receiverId: {type: Schema.ObjectId, required:true, ref: 'User'},
     date: {type: Date, required:true}
 }, {collection: 'Messages'})
 

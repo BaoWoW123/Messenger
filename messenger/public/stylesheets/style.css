@@ -51,9 +51,10 @@ input {
   position: absolute;
   top:25%;
 }
+
 .home {
-  display: grid;
-  grid-template-rows: 2fr 1fr;
+  display:flex;
+  align-items: flex-start;
   gap: 20px;
   text-align: center;
   min-width: 100%;
@@ -111,11 +112,15 @@ form button {
   display: flex;
   flex-direction:column;
   box-sizing: border-box;
+  overflow:auto;
+  max-height:85vh;
 }
 
 .messages {
   justify-content: flex-end;
   flex:1;
+  overflow: auto;
+  max-height: 100%;
 }
 
 .messageForm > label > input {
@@ -125,8 +130,20 @@ form button {
 
 .message {
   display:flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 20px;
   border-bottom:1px solid whitesmoke;
+
+}
+
+.message div:first-child {
+  display: flex;
+  text-align: start;
+  flex: 1;
+  justify-content: flex-start;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding-right: 50px;
+  gap: 10px;
+}
+.message div:last-child {
 }

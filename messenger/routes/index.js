@@ -187,7 +187,7 @@ router.post(
       } else {
         const messages = await Message.find({
           conversationId: conversation._id,
-        }).sort({ date: 1 });
+        }).sort({ date: 1 }).populate('senderId', 'username').exec();
 
         formatMsgs = messages.map((msg) => {
           const messageDate = new Date(msg.date);
@@ -202,8 +202,13 @@ router.post(
           };
           const formattedDate = messageDate.toLocaleString("en-US", options);
 
-          return `
-            <div class='message'><div>${msg.content}</div><div>${formattedDate}</div></div>`;
+          return (`
+            <div class='message'>
+              <div>${msg.senderId.username}
+                <p>${msg.content}</p>
+              </div>
+              <div>${formattedDate}</div
+            ></div>`);
         });
       }
       return res.status(200).json({ conversation: formatMsgs });
