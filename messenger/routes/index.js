@@ -6,6 +6,7 @@ require("dotenv").config();
 const { check, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const passport = require("../passport");
+const { io } = require("../bin/www");
 
 /* GET home page. */
 //GET ROUTES RETURN JSON FOR TESTS
@@ -167,11 +168,10 @@ router.post(
   "/chat",
   passport.authenticate("jwt", { session: false, failureRedirect: "/login" }),
   async (req, res, next) => {
-    const { friendUsername } = req.body;
+    const { friendId } = req.body;
     const user = req.user;
-    if (friendUsername) {
-      const friend = await User.findOne({ username: friendUsername });
-
+    if (friendId) {
+      const friend = await User.findById(friendId).select('id, username');
       //find conversation between both users, if none, then create one
       let conversation = await Conversation.findOne({
         messagerIds: { $all: [user._id, friend._id] },
@@ -211,7 +211,7 @@ router.post(
             ></div>`);
         });
       }
-      return res.status(200).json({ conversation: formatMsgs });
+      return res.status(200).json({ conversation: formatMsgs, conversationId: conversation._id});
     } else {
       return res.status().json({ Error: "Friend username not found" });
     }
@@ -227,15 +227,10 @@ router.post(
     if (!errors.isEmpty()) {
       return console.error(errors.array());
     }
-    try {
-      const { msg, friend } = req.body;
+    
+      const { msg, friend, conversationId } = req.body;
       const senderId = req.user._id;
       const receiverId = (await User.findOne({ username: friend }).select("id"))._id;
-      const conversationId = (
-        await Conversation.findOne({
-          messagerIds: { $all: [senderId, receiverId] },
-        }).select("id")
-      )._id;
 
       const message = new Message({
         conversationId: conversationId,
@@ -244,11 +239,25 @@ router.post(
         receiverId: receiverId,
         date: new Date(),
       });
-      const save = await message.save()
-      return res.json({ save });
-    } catch (err) {
-      return next(err);
-    }
+      const sender = await User.findById(senderId).select('username');
+      
+      const options = {
+        month: "numeric",
+        day: "numeric",
+        year: "2-digit",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      };
+      
+      const formattedDate = message.date.toLocaleString("en-US", options);
+     res.json({
+        content: message.content,
+        sender: sender.username,
+        date: formattedDate,
+        conversationId: conversationId,
+      });
+      //const save = await message.save()
   }
 );
 

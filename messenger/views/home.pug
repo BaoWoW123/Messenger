@@ -3,7 +3,7 @@ extends layout
 block content
   h1 Welcome #{user.username}
   .home
-    .conversation 
+    .conversation
       .messages
       form.messageForm(method="post")
         label(for="messageInput")
@@ -14,19 +14,40 @@ block content
         if user.friends 
           .friends
             each friend in user.friends 
-              button(onclick="getConversation(event)")=friend.username
+              button(type='button' onclick='getConversation("' + friend.id + '", event)')=friend.username
+
         form.addForm(method='post')
           label(for="username")
             input(type="text" name='username' placeholder="Friend's username..." required)
           label(for="createChat")
             button(type='submit') Add
-
+            
+  script(src='/socket.io/socket.io.js')
   script.
+    var socket = io();
+
+    socket.on('chat message', (message) => {
+      const messages = document.querySelector('.messages');
+      const newMsg = document.createElement('div');
+  
+      const htmlContent =`
+        <div class='message'>
+          <div>${message.sender}
+            <p>${message.content}</p>
+          </div>
+          <div>${message.date}</div>
+        </div>`;
+            
+      newMsg.innerHTML = htmlContent;
+      messages.appendChild(newMsg);
+      messages.scrollTop = messages.scrollHeight;
+    });
 
     const messageForm = document.querySelector('.messageForm');
     messageForm.addEventListener('submit', async (evt) => {
       evt.preventDefault()
       const msg = document.querySelector('.messageInput');
+      const conversationId = document.querySelector('.conversation').getAttribute('data-id');
       try {
         sendMessage(msg.value);
         msg.value = '';
@@ -35,8 +56,7 @@ block content
       }
     })
 
-    async function getConversation (evt) {
-      const friendUsername = evt.target.textContent;
+    async function getConversation (friendId, evt) {
       const activeBtns = document.querySelectorAll('.active');
       //remove & set active friend for ajax fetching for /message
       if (activeBtns) {
@@ -52,12 +72,15 @@ block content
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({friendUsername}),
+        body: JSON.stringify({friendId}),
       })
       if (res.ok) {
         const data = await res.json();
         if (data.conversation.length) { 
         document.querySelector('.messages').innerHTML = data.conversation.join('');
+        document.querySelector('.conversation').setAttribute('data-id', data.conversationId);
+        socket.emit('join conversation', data.conversationId)
+        
         } else { 
           document.querySelector('.messages').innerHTML = '<h3>New Conversation</h3>';
         }
@@ -70,16 +93,26 @@ block content
 
     async function sendMessage(msg) {
       const friend = document.querySelector('.active').textContent
+      const conversationId = document.querySelector('.conversation').getAttribute('data-id')
       try {
         const res = await fetch('/message', {
           method: 'POST',
           headers: {
             'Content-type': 'application/json'
           },
-          body: JSON.stringify({msg, friend})
+          body: JSON.stringify({msg, friend, conversationId})
         })
 
         if (res.ok) {
+        const data = await res.json();
+
+      // Emit the 'chat message' event with the message data
+      socket.emit('chat message', {
+        content: msg,
+        sender: data.sender,
+        date: data.date,
+        conversationId: conversationId,
+      });
           console.log('message sent successfully')
         } else {
           console.log('Error sending message:', res.status)
