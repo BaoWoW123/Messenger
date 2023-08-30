@@ -6,10 +6,7 @@ require("dotenv").config();
 const { check, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const passport = require("../passport");
-const { io } = require("../bin/www");
 
-/* GET home page. */
-//GET ROUTES RETURN JSON FOR TESTS
 router.get("/", function (req, res, next) {
   res.render("index", { title: "Messenger" });
 });
@@ -73,7 +70,7 @@ router.post(
           email: email,
           password: hashedPw,
         });
-        //await user.save();  not saved for testing
+        await user.save()//  not saved for testing
         const token = jwt.sign({ user: user._id }, process.env.SECRET_KEY, {
           expiresIn: "1d",
         });
@@ -257,7 +254,7 @@ router.post(
         date: formattedDate,
         conversationId: conversationId,
       });
-      //const save = await message.save()
+      const save = await message.save()
   }
 );
 

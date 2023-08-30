@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www",
+    "start": "node ./bin/www",
     "test": "jest"
   },
   "dependencies": {
@@ -24,5 +24,8 @@
     "pug": "2.0.0-beta11",
     "socket.io": "^4.7.2",
     "supertest": "^6.3.3"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.4.8"
   }
 }
